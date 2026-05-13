@@ -130,9 +130,9 @@ kubectl exec redis-cluster-final-leader-0 -c redis-cluster-final-leader -- redis
 
 
 
-
-
-
 # 6. Проверить, что данные сохраняются (persistence)
-kubectl exec -it redis-cluster-final-ss-0 -- redis-cli SET session:user1 "data"
-kubectl exec -it redis-cluster-final-ss-0 -- redis-cli GET session:user1
+```
+kubectl exec -it redis-cluster-final-leader-0 -- redis-cli SET session:user1 "data"
+kubectl exec -it redis-cluster-final-leader-0 -- redis-cli GET session:user1
+```
+![alt text](image-4.png)
