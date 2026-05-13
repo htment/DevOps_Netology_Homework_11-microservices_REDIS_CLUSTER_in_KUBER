@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-cluster-config
+data:
+  redis.conf: |
+    cluster-enabled yes
+    cluster-node-timeout 5000
+    cluster-require-full-coverage no
+    appendonly yes
+    bind 0.0.0.0
+---
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: RedisCluster
+metadata:
+  name: redis-cluster-fix-nodeconf
+spec:
+  clusterSize: 3
+  clusterVersion: v7
+
+  kubernetesConfig:
+    image: redis:7.2-alpine
+    imagePullPolicy: IfNotPresent
+
+
+  persistenceEnabled: true
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 10Gi
+
+  redisExporter:
+    enabled: true
+    image: quay.io/opstree/redis-exporter:v1.44.0
+
+  redisConfig:
+    dynamicConfig:
+      - "cluster-enabled yes"
+      - "appendonly yes"
+      - "cluster-node-timeout 5000"
+
+  podSecurityContext:
+    fsGroup: 1000
+
+  # Важно: в v1beta2 у поля volumes/volumeMounts для kubernetesConfig похоже нет.
+  # Поэтому делаем попытку через initContainer: создать /node-conf (emptyDir) не сможем без volume mount.
+  # Этот манифест оставлен как попытка минимально стабилизировать кластер на вашей версии CRD.
+

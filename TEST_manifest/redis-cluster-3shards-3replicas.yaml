@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-cluster-config
+data:
+  redis.conf: |
+    cluster-enabled yes
+    cluster-node-timeout 5000
+    cluster-require-full-coverage no
+    appendonly yes
+    bind 0.0.0.0
+---
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: RedisCluster
+metadata:
+  name: redis-cluster
+spec:
+  # 3 шарда (leaders). Репликации/follower зависят от логики оператора.
+  clusterSize: 3
+  clusterVersion: v7
+
+  kubernetesConfig:
+    image: redis:7.2-alpine
+    imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+
+  persistenceEnabled: true
+
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 10Gi
+
+  redisConfig:
+    additionalRedisConfig: redis-cluster-config
+
+  redisExporter:
+    enabled: true
+    image: quay.io/opstree/redis-exporter:v1.44.0
