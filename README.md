@@ -32,7 +32,7 @@ Kubernetes — промышленный стандарт оркестрации 
 apiVersion: redis.redis.opstreelabs.in/v1beta2
 kind: RedisCluster
 metadata:
-  name: redis-cluster-final
+  name: redis-cluster-final-follower
 spec:
   clusterSize: 3
   clusterVersion: v7
@@ -81,5 +81,58 @@ spec:
 
   redisExporter:
     enabled: true
-    image: quay.io/opstree/redis-exporter:v1.44.0# DevOps_Netology_Homework_11-microservices_REDIS_CLUSTER_in_KUBER
-# DevOps_Netology_Homework_11-microservices_REDIS_CLUSTER_in_KUBER
+    image: quay.io/opstree/redis-exporter:v1.44
+
+```
+
+
+
+
+
+
+# 1. Установить Redis Operator (если не установлен)
+```
+kubectl apply -k github.com/OT-CONTAINER-KIT/redis-operator//config/default?ref=v0.15.0
+```
+# 2. Применить манифест
+```
+kubectl apply -f redis-cluster-final.yaml
+```
+
+
+
+
+# 3. Проверить состояние кластера
+```
+kubectl get rediscluster redis-cluster-final
+```
+![alt text](image-1.png)
+
+
+# 4. Посмотреть все поды кластера (должно быть 6 подов)
+```
+ kubectl get pods -l app=redis-cluster-final-follower
+```
+![alt text](image-2.png)
+```
+
+kubectl exec redis-cluster-final-leader-0 -c redis-cluster-final-leader -- redis-cli cluster info
+```
+![alt text](image.png)
+
+# 5. Проверить топологию кластера
+```
+kubectl exec redis-cluster-final-leader-0 -c redis-cluster-final-leader -- redis-cli CLUSTER NODES
+
+```
+
+![alt text](image-3.png)
+
+
+
+
+
+
+# 6. Проверить, что данные сохраняются (persistence)
+kubectl exec -it redis-cluster-final-ss-0 -- redis-cli SET session:user1 "data"
+kubectl exec -it redis-cluster-final-ss-0 -- redis-cli GET session:user1
